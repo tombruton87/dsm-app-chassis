@@ -88,7 +88,7 @@
         <p><label><input type="checkbox" id="set-ssl"> Behind DSM's reverse proxy with HTTPS</label></p>
         @APP_SETTINGS_FIELDS@
         <button class="btn primary" id="save-settings">Save and restart @TITLE@</button></div></div>
-      <div class="card"><h2>HTTPS with DSM's reverse proxy</h2><div class="in"><p>Third-party packages can't use DSM's certificates directly, but DSM's reverse proxy can front the app with them:</p><ol>
+      <div class="card"><h2>HTTPS with DSM's reverse proxy</h2><div class="in"><p>DSM's reverse proxy can also front the app with a hostname and DSM's certificates:</p><ol>
         <li><b>Control Panel → Login Portal → Advanced → Reverse Proxy → Create</b>: source <code>HTTPS</code>, hostname your domain, port <code>443</code>; destination <code>HTTP</code>, <code>localhost</code>, port <span id="site-port">@PORT@</span>.</li>
         <li>Under <b>Custom Header</b>, <b>Create → WebSocket</b>.</li>
         <li><b>Control Panel → Security → Certificate → Settings</b>: give that reverse-proxy entry your certificate.</li>
