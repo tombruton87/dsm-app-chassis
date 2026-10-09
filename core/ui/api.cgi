@@ -36,6 +36,7 @@ if [[ "${REQUEST_METHOD:-GET}" == GET ]]; then
     status)
       touch "$VAR/watching" 2>/dev/null
       state=$(tr -cd 'a-z' < "$VAR/state" 2>/dev/null); status=$(cat "$VAR/status.json" 2>/dev/null); status=${status:-null}
+      [[ -f "$VAR/secret.json" || "$status" == null ]] || status=$(jq -c '.secret = false' <<< "$status" 2>/dev/null || echo "$status")   # the loop's copy may lag a take
       phase=$(head -c 160 "$VAR/phase" 2>/dev/null | tr -d '\000-\037"\\')
       reply "200 OK" application/json "{\"role\":\"$role\",\"user\":\"$user\",\"state\":\"${state:-unknown}\",\"phase\":\"$phase\",\"now\":$(date +%s),\"pending\":$([[ -f "$VAR/request" ]] && echo true || echo false),\"status\":$status}" ;;
     log)

@@ -360,7 +360,9 @@ make_report() {
     echo; echo "== package log (last 300 lines)"; tail -n 300 "$LOG"
     for s in $SERVICES; do echo; echo "== $(cname "$s") (last 120 lines)"; docker logs --tail 120 "$(cname "$s")" 2>&1; done
     has app_report && { echo; app_report; }
-  } 2>/dev/null | redact > "$f" && for_window "$VAR/report.txt"
+    :
+  } 2>/dev/null | redact > "$f"
+  [[ -s "$f" ]] && for_window "$VAR/report.txt"     # judged by the file, not by the pipeline's last stage
 }
 
 # ---------------------------------------------------------------- settings
@@ -503,9 +505,9 @@ start_app || failed "$PKG_TITLE couldn't start — the lines above say why. Pack
 set +eu   # from here a failing command is a condition to report, not a reason to die
 sync_dsm; report_upgrade
 phase "first look at $PKG_TITLE"
+refresh_rich
 set_state running; rm -f "$VAR/phase"; write_status; publish_log
 say "✓ $PKG_TITLE$(has app_version && echo " $(app_version)") is up at $(env_get APP_URL)"
-refresh_rich; write_status
 
 TICK=0
 while true; do

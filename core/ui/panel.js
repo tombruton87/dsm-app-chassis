@@ -138,7 +138,7 @@ window.Panel = (function () {
   }
   function takeSecret() {
     secretShown = true;
-    api("action=take_secret", { action: "take_secret" }).then(function (s) { $("secret-for").textContent = s.email || ""; $("secret").textContent = s.password || ""; $("secret-card").hidden = false; $("secret-note").textContent = (tabs.secretNote && tabs.secretNote(s)) || ""; if (s.kind && tabs[s.kind] ) showTab(s.kind); }).catch(function (e) { secretShown = false; showErr(e.message); });
+    api("action=take_secret", { action: "take_secret" }).then(function (s) { $("secret-for").textContent = s.email || ""; $("secret").textContent = s.password || ""; $("secret-card").hidden = false; $("secret-note").textContent = (tabs.secretNote && tabs.secretNote(s)) || ""; if (s.kind && tabs[s.kind] ) showTab(s.kind); }).catch(function (e) { if (!/nothing waiting/.test(e.message)) { secretShown = false; showErr(e.message); } });   // collected elsewhere: say nothing
   }
   $("copy-secret").onclick = function () { try { navigator.clipboard.writeText($("secret").textContent); $("copy-secret").textContent = "Copied"; } catch (e) { /* select by hand */ } };
   $("wipe").onclick = function () { if (!$("wipe-saved").checked) { showErr("Tick the box first — the backups go too."); return; } if ($("wipe-phrase").value.trim() !== "remove everything") { showErr("Type exactly: remove everything"); return; } act("wipe", { confirm: $("wipe-phrase").value.trim() }, "Last chance. @TITLE@, all of its data and backups, and the package will be removed. There is no undo.\n\nRemove everything?"); };

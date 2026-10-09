@@ -34,7 +34,7 @@ up() {
   done; log "not running after 15 minutes"; tail -n 30 "$VAR/package.log"; return 1
 }
 request() {   # lines… — done when the loop has answered THIS request
-  local f="$VAR/request" start what; start=$(date +%s); what=$(sed -n "s/^ACTION='\([a-z]*\)'$/\1/p" <<< "$1")
+  local f="$VAR/request" start what; start=$(date +%s); what=$(sed -n "s/^ACTION='\([a-z0-9]*\)'$/\1/p" <<< "$1")
   printf '%s\n' "$@" "BY='e2e'" > "$f.tmp" && mv "$f.tmp" "$f"; touch "$VAR/watching"
   while [[ -f "$f" || "$(jq -r '.busy // ""' "$VAR/status.json" 2>/dev/null)" != "" || "$(jq -r '.last.action // ""' "$VAR/status.json" 2>/dev/null)" != "$what" || "$(jq -r '.last.at // 0' "$VAR/status.json" 2>/dev/null)" -lt "$start" ]]; do
     sleep 2; touch "$VAR/watching"; (( $(date +%s) - start > 900 )) && { echo "  TIMEOUT waiting for: $1"; return 1; }
