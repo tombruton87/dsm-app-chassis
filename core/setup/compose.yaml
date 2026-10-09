@@ -1,0 +1,24 @@
+# The package's one Container Manager project: the setup container (run-core.sh
+# + the app's app.sh). Runs as root with Docker's socket, on the host's network.
+services:
+  setup:
+    build: .
+    image: @PKG@-setup:local
+    container_name: @PKG@-setup
+    user: "0:0"
+    network_mode: host
+    restart: "no"
+    stop_grace_period: 2m
+    entrypoint: ["bash", "/pkg/setup/run.sh"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/packages/@PKG@/target:/pkg:ro
+      - /var/packages/@PKG@/var:/pkgvar
+      - type: bind
+        source: /var/packages/@PKG@/shares/@PKG@
+        target: /var/packages/@PKG@/shares/@PKG@
+        bind:
+          create_host_path: false
+      - /usr/local/etc:/dsm-etc
+      - /etc.defaults/VERSION:/etc.defaults/VERSION:ro
+      - /etc/synoinfo.conf:/etc/synoinfo.conf:ro

@@ -1,0 +1,5 @@
+# Shared by the package's scripts. Package Center runs them as the package's
+# own user, which can't use Docker — the setup container does the work; these
+# leave it answers and notes.
+VAR="${SYNOPKG_PKGVAR:-/var/packages/@PKG@/var}"
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S')  [$(basename "$0")] $*" >> "$VAR/package.log" 2>/dev/null; }

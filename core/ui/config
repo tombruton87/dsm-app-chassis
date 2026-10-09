@@ -1,0 +1,12 @@
+{
+    "@PKG@.js": {
+        "@APPID@": {
+            "type": "app", "title": "@TITLE@", "desc": "@DESC@", "version": "1",
+            "icon": "images/{0}.png", "texts": "texts",
+            "preloadTexts": ["notification:title", "notification:failing", "notification:restarted", "notification:backupfailed"@APP_PRELOAD@],
+            "allowMultiInstance": false, "allUsers": false, "grantPrivilege": "local", "advanceGrantPrivilege": true,
+            "appWindow": "@APPID_WIN@", "depend": ["@APPID_WIN@"]
+        },
+        "@APPID_WIN@": { "type": "lib", "title": "@TITLE@", "icon": "images/{0}.png", "texts": "texts" }
+    }
+}

@@ -1,0 +1,9 @@
+[app]
+title="@TITLE@"
+
+[notification]
+title="@TITLE@"
+failing="{0} keeps stopping ({1} restarts in the last hour). See its log in Package Center → @TITLE@ → View log, or open @TITLE@ from the main menu."
+restarted="{0} had stopped and was started again."
+backupfailed="Last night's @TITLE@ backup didn't finish. Open @TITLE@ from the main menu → Backups to see why."
+@APP_STRINGS@

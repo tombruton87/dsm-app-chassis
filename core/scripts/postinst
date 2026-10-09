@@ -1,0 +1,21 @@
+#!/bin/sh
+. "$(dirname "$0")/common"
+log "${SYNOPKG_PKG_STATUS:-} ${SYNOPKG_PKGVER:-}"
+# The install wizard's answers, left for the setup container as KEY='value'
+# lines, each narrowed to its own characters (a shell reads them — as data).
+# The app's own answers come through wizard/answers.sh, built in below.
+only() { printf '%s' "$1" | tr -cd "$2"; }
+hex() { printf '%s' "$1" | od -An -v -tx1 | tr -d ' \n'; }
+if [ -n "${wizard_lan_ip:-}" ]; then
+  {
+    echo "LAN_IP='$(only "$wizard_lan_ip" '0-9.')'"
+    echo "TZ='$(only "${wizard_tz:-}" 'A-Za-z0-9_/+-')'"
+    echo "HTTP_PORT='$(only "${wizard_http_port:-@PORT@}" '0-9')'"
+    echo "HOST_UID='$(id -u)'"
+    echo "HOST_GID='$(id -g)'"
+# @APP_ANSWERS@
+  } > "$VAR/answers.env.tmp" && mv "$VAR/answers.env.tmp" "$VAR/answers.env"
+  chmod 600 "$VAR/answers.env" 2>/dev/null
+  log "wizard: address $wizard_lan_ip, port ${wizard_http_port:-}, time zone ${wizard_tz:-}"
+fi
+exit 0

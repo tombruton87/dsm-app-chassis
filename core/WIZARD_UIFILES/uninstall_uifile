@@ -1,0 +1,6 @@
+[{
+    "step_title": "Removing @TITLE@",
+    "items": [{
+        "desc": "@TITLE@ stops and its containers are removed. Its data stays in Container Manager's volumes, and backups and settings in the <b>@PKG@</b> shared folder; install the package again and it picks up where it left off.<br><br>To remove everything for good, cancel this and use <b>@TITLE@ → Maintenance → Remove @TITLE@ and everything</b> instead: it removes the containers, images, volumes, the shared folder and then this package. If the package can no longer start, remove by hand: this uninstall, then the <b>@PKG@</b> shared folder (Control Panel → Shared Folder), the volumes whose names start <b>@PKG@_</b> (Container Manager → Volume) and its images (Container Manager → Image)."
+    }]
+}]

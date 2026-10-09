@@ -1,0 +1,9 @@
+#!/bin/sh
+. "$(dirname "$0")/common"
+case "$1" in
+  start) log "starting"; exit 0 ;;
+  stop) log "stopping"; exit 0 ;;
+  status) case "$(cat "$VAR/state" 2>/dev/null)" in failed|stopped|removed) exit 3 ;; *) exit 0 ;; esac ;;
+  log) echo "$VAR/package.log"; exit 0 ;;
+  *) exit 1 ;;
+esac

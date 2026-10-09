@@ -1,0 +1,5 @@
+{
+    "data-share": { "shares": [ { "name": "@PKG@", "permission": { "rw": ["@PKG@"] } } ] },
+    "port-config": { "protocol-file": "@PKG@.sc" },
+    "docker-project": { "projects": [ { "name": "@PKG@-setup", "path": "setup", "build_params": { "force_pull": false, "force_recreate": true, "build": true } } ] }
+}
