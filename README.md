@@ -20,7 +20,7 @@ myapp-dsm/
   VERSION, CHANGELOG.md, README.md
   app/compose.yaml    the app's compose project (container_name: <pkg>-<service>, volumes named)
   app/env.example     what .env holds
-  setup/app.sh        hooks for the setup container (see below)
+  setup/app.sh        hooks for the setup container (see below); anything else in setup/ ships beside it
   ui/app.html         sections for the app's own tabs   ui/app-nav.html  their nav buttons
   ui/app.js           Panel.register("tab", {render, …})  ui/app-actions.sh  CGI validation of app actions
   ui/strings          extra DSM notification strings     ui/preload.txt   their keys for ui/config
@@ -71,7 +71,18 @@ TAGLINE WELCOME BACKUP_WHAT SITE_NOTE ICON_TOP ICON_BOTTOM ICON_LETTER BETA
 | `app_wipe` | removal | extra cleanup before the share is emptied |
 | `app_extra_ports` | firewall .sc | print extra `[name] … dst.ports` blocks |
 
-Core helpers available to hooks: `say`, `env_get`, `env_set`, `rand N`, `compose …`, `in_volume VOL ro|rw -- CMD` (stdin/stdout streaming, no host mounts), `cname SERVICE`, `svc_up SERVICE`, `leave_secret LABEL VALUE KIND` (one-time secret for the window), `notify KEY HOURS ARGS…`, `MSG`.
+Core helpers available to hooks: `say`, `env_get`, `env_set`, `rand N`, `compose …`, `in_volume VOL ro|rw -- CMD` (stdin/stdout streaming, no host mounts; makes the volume with compose's labels if it doesn't exist yet), `cname SERVICE`, `svc_up SERVICE`, `leave_secret LABEL VALUE KIND` (one-time secret for the window), `notify KEY HOURS ARGS…`, `MSG`.
+
+HTTPS helpers (`setup/tls.sh`, for apps that serve TLS themselves; the
+certificate lives in one of the app's volumes under `tls/`, and `.env` holds
+`TLS=dsm|self|off` and `TLS_SOURCE`, what's really in use):
+
+| Helper | Does |
+|---|---|
+| `tls_prepare VOL` | puts the certificate for the chosen mode in place: DSM's system-default certificate, or a self-signed one (kept across restarts), falling back to self-signed when DSM has none; writes `$VAR/cert.json` |
+| `tls_refresh_dsm VOL` | re-reads DSM's certificate; sets `CERT_REFRESH=changed|same|none` (call it daily from `app_tick`, restart or reload the app on `changed`) |
+| `tls_fix_scheme` | makes the address `https://` or `http://` to match the mode (unless DSM's reverse proxy provides HTTPS) |
+| `tls_info VOL`, `tls_dsm_cert`, `tls_self_cert`, `tls_store VOL TAR SOURCE` | the parts, for apps that need them |
 
 ## The window's app.js
 

@@ -32,9 +32,9 @@ PY
 # app/: the compose project, as the app wrote it.
 cp "$APPDIR/app/compose.yaml" "$APPDIR/app/env.example" "$target/app/"
 # setup/: the chassis core + the app's hooks + pkg.env.
-cp "$CH/core/setup/run-core.sh" "$CH/core/setup/run.sh" "$target/setup/"
+cp "$CH/core/setup/run-core.sh" "$CH/core/setup/run.sh" "$CH/core/setup/tls.sh" "$target/setup/"
 sub "$CH/core/setup/Dockerfile" > "$target/setup/Dockerfile"; sub "$CH/core/setup/compose.yaml" > "$target/setup/compose.yaml"
-[[ -f "$APPDIR/setup/app.sh" ]] && cp "$APPDIR/setup/app.sh" "$target/setup/app.sh"
+[[ -d "$APPDIR/setup" ]] && cp -r "$APPDIR/setup/." "$target/setup/"   # app.sh and anything it uses (scripts it runs in its containers…)
 { echo "PKG_NAME='$PKG_NAME'"; echo "PKG_TITLE='$PKG_TITLE'"; echo "APP_ID='$APP_ID'"; echo "REPO='$REPO'"; echo "SERVICES='$SERVICES'"; echo "VOLUMES='$VOLUMES'"; echo "IMAGE_VARS='$IMAGE_VARS'"
   echo "HEALTH_PATH='${HEALTH_PATH:-/}'"; echo "APP_ACTIONS='${APP_ACTIONS:-none}'"; echo "APP_ANSWER_KEYS='${APP_ANSWER_KEYS:-}'"; echo "APP_REQUEST_KEYS='${APP_REQUEST_KEYS:-}'"; } > "$target/setup/pkg.env"
 cp "$target/setup/pkg.env" "$target/ui/pkg.env"

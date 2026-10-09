@@ -44,7 +44,10 @@ compose() { docker compose -f "$APP/compose.yaml" --project-directory "$APP" "$@
 has() { declare -F "$1" >/dev/null; }                   # is this hook defined by app.sh?
 # A short-lived container over one of the app's volumes (this image has tar, du, sqlite3):
 # nothing from the share is mounted into it — what goes in arrives on stdin, what comes out leaves on stdout.
-in_volume() { local vol=$1 mode=$2; shift 2; [[ "${1:-}" == -- ]] && shift; docker run --rm -i --entrypoint sh -v "${PKG_NAME}_$vol:/vol:$mode" "$PKG_NAME-setup:local" -c "$*"; }
+in_volume() { local vol=$1 mode=$2; shift 2; [[ "${1:-}" == -- ]] && shift
+  # Made here before compose's first up, so made with compose's labels — or compose warns the volume isn't its own.
+  docker volume inspect "${PKG_NAME}_$vol" >/dev/null 2>&1 || docker volume create --label com.docker.compose.project="$PKG_NAME" --label com.docker.compose.volume="$vol" "${PKG_NAME}_$vol" >/dev/null
+  docker run --rm -i --entrypoint sh -v "${PKG_NAME}_$vol:/vol:$mode" "$PKG_NAME-setup:local" -c "$*"; }
 
 # A file the package's user wrote: only the names given, each with a value of
 # its own shape (the app's names through app_validate), the whole file refused on one bad line.
@@ -459,6 +462,7 @@ heal_name() {
 }
 
 # ------------------------------------------------------------------- start
+[[ -f "$PKG/setup/tls.sh" ]] && . "$PKG/setup/tls.sh"   # HTTPS helpers an app may use (tls_*)
 [[ -f "$PKG/setup/app.sh" ]] && . "$PKG/setup/app.sh"
 [[ -f "$LOG" ]] && tail -n 3000 "$LOG" > "$LOG.tmp" 2>/dev/null && mv "$LOG.tmp" "$LOG"
 set_state starting
