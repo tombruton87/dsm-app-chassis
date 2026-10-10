@@ -40,6 +40,7 @@ json() { local s=${1//\\/\\\\}; s=${s//\"/\\\"}; printf '"%s"' "$(tr -d '\000-\0
 for_window() { chown "$HOST_UID:$HOST_GID" "$1.tmp" 2>/dev/null || true; chmod 600 "$1.tmp"; mv "$1.tmp" "$1"; }
 now() { date +%s; }
 rand() { openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c "${1:-24}"; }
+qr_png_b64() { qrencode -t PNG -s 6 -m 2 -o - "$1" 2>/dev/null | base64 -w0; }   # text → a QR code as base64 PNG, for an <img> in the window
 compose() { docker compose -f "$APP/compose.yaml" --project-directory "$APP" "$@"; }
 has() { declare -F "$1" >/dev/null; }                   # is this hook defined by app.sh?
 # A short-lived container over one of the app's volumes (this image has tar, du, sqlite3):
