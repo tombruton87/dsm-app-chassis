@@ -21,7 +21,7 @@ UPDATES=updates
 export COMPOSE_PROJECT_NAME=$PKG_NAME
 
 BUSY=""; LAST="null"; UPDATE_AT=0; DISK_AT=0; STOPPING=0; WIPED=0
-APPJ="null"; MAIL_JSON="null"; DISK_JSON="null"; UPDATE_JSON="null"; IMAGE_UPDATE="null"; STORAGE_JSON="null"; STORAGE_AT=0
+APPJ="null"; STATUS_ERR=""; MAIL_JSON="null"; DISK_JSON="null"; UPDATE_JSON="null"; IMAGE_UPDATE="null"; STORAGE_JSON="null"; STORAGE_AT=0
 HOST_UID=1000; HOST_GID=1000; MSG=""
 
 # ------------------------------------------------------------------ basics
@@ -158,26 +158,38 @@ disk_usage() {
 }
 storage_report() {   # every volume's size, plus what the app adds
   local v entries="{}" mb extra="{}"
-  for v in $VOLUMES; do mb=$(in_volume "$v" ro -- du -sm /vol 2>/dev/null </dev/null | cut -f1); entries=$(jq -c --arg k "$v" --argjson m "${mb:-0}" '. + {($k): $m}' <<< "$entries"); done
+  for v in $VOLUMES; do mb=$(in_volume "$v" ro -- du -sm /vol 2>/dev/null </dev/null | tail -n 1 | cut -f1); [[ "$mb" =~ ^[0-9]+$ ]] || mb=0   # du on a busy volume can say other things
+    entries=$(jq -c --arg k "$v" --argjson m "$mb" '. + {($k): $m}' <<< "$entries"); done
   has app_storage && extra=$(app_storage); [[ "$extra" == \{* ]] || extra="{}"
   jq -n -c --argjson volumes "$entries" --argjson app "$extra" --argjson at "$(now)" '{at: $at, volumes: $volumes, app: $app}'
 }
 write_status() {
-  local parts="[]" s st h
+  local parts="[]" s st h j_backups j_nightly j_keep j_blast j_secret n bad=""
   for s in $SERVICES; do read -r st h < <(state_of "$(cname "$s")"); parts=$(jq -c --arg n "$s" --arg s "$st" --arg h "$h" '. + [{name: $n, state: $s, health: $h}]' <<< "$parts"); done
+  j_backups=$(list_backups); j_nightly=$(pref NIGHTLY 1); j_keep=$(pref KEEP 14)
+  j_blast=$(cat "$VAR/backup.last" 2>/dev/null || echo null); j_secret=$([[ -f "$VAR/secret.json" ]] && echo true || echo false)
+  # One bad part (an app hook's output, a busy du) must not leave the window with nothing: it becomes null, and the log says so once.
+  for n in LAST parts APPJ DISK_JSON STORAGE_JSON j_backups j_nightly j_keep j_blast UPDATE_JSON IMAGE_UPDATE; do
+    [[ -n "${!n}" ]] && jq empty >/dev/null 2>&1 <<< "${!n}" && continue
+    bad="$n wasn't JSON ([$(head -c 120 <<< "${!n}" | tr -d '\000-\037')]) and was left out"; printf -v "$n" '%s' null
+  done
+  [[ -n "$bad" && "$bad" != "$STATUS_ERR" ]] && { STATUS_ERR=$bad; say "status for the window: $bad"; }
   jq -n -c \
     --argjson at "$(now)" --arg build "$BUILD" --arg busy "$BUSY" --argjson last "$LAST" --argjson parts "$parts" \
     --arg version "$(has app_version && app_version || echo "")" --arg url "$(env_get APP_URL)" --arg port "$(env_get HTTP_PORT)" \
     --arg lan_ip "$(env_get LAN_IP)" --arg tz "$(env_get TZ)" --arg ssl_proxy "$(env_get SSL_PROXY)" \
     --argjson app "$APPJ" --argjson disk "$DISK_JSON" --argjson storage "$STORAGE_JSON" \
-    --argjson backups "$(list_backups)" --argjson nightly "$(pref NIGHTLY 1)" --argjson keep "$(pref KEEP 14)" \
-    --argjson backup_last "$(cat "$VAR/backup.last" 2>/dev/null || echo null)" \
+    --argjson backups "$j_backups" --argjson nightly "$j_nightly" --argjson keep "$j_keep" \
+    --argjson backup_last "$j_blast" \
     --argjson update "$UPDATE_JSON" --argjson image_update "$IMAGE_UPDATE" \
-    --argjson secret "$([[ -f "$VAR/secret.json" ]] && echo true || echo false)" \
+    --argjson secret "$j_secret" \
     '{at: $at, build: $build, busy: $busy, last: $last, parts: $parts, version: $version, url: $url, port: $port, lan_ip: $lan_ip, tz: $tz,
       ssl_proxy: ($ssl_proxy == "1"), app: $app, disk: $disk, storage: $storage, backups: $backups,
       backup: {nightly: ($nightly == 1), keep: $keep, last: $backup_last}, update: $update, image_update: $image_update, secret: $secret}' \
-    > "$VAR/status.json.tmp" 2>/dev/null && for_window "$VAR/status.json"
+    > "$VAR/status.json.tmp" 2>"$VAR/.status-err" && { for_window "$VAR/status.json"; rm -f "$VAR/.status-err"; return 0; }
+  n=$(head -c 200 "$VAR/.status-err" 2>/dev/null)
+  [[ -n "$n" && "$n" != "$STATUS_ERR" ]] && { STATUS_ERR=$n; say "✗ the status for the window couldn't be written: $n"; }
+  return 1
 }
 write_logs() {   # the containers' last lines, and whatever the app adds, for the window
   local s
