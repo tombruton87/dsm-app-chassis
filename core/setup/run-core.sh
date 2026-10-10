@@ -53,7 +53,7 @@ in_volume() { local vol=$1 mode=$2; shift 2; [[ "${1:-}" == -- ]] && shift
 # A file the package's user wrote: only the names given, each with a value of
 # its own shape (the app's names through app_validate), the whole file refused on one bad line.
 read_settings() {   # file, allowed names…
-  local file=$1 line key value re="^([A-Z_]+)='([A-Za-z0-9._/+@:-]*)'$"; shift
+  local file=$1 line key value re="^([A-Z][A-Z0-9_]*)='([A-Za-z0-9._/+@:-]*)'$"; shift
   while IFS= read -r line || [[ -n "$line" ]]; do
     [[ -z "$line" ]] && continue
     [[ "$line" =~ $re ]] || return 1
